@@ -1,67 +1,296 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Dimz Store — Tubes WebPro (Laravel)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi e-commerce digital (E-Book Store) berbasis Laravel dengan:
+- Landing page + Catalog
+- Cart & Checkout
+- Pembayaran QRIS (statis → dinamis via API)
+- Verifikasi pembayaran via API Mutasi (hanya 3 mutasi terbaru) menggunakan **kode unik**
+- Dashboard berbasis role: **User / Publisher / Admin**
+- RBAC menggunakan **Spatie Laravel Permission**
+- Auth + UI kit menggunakan **Laravel Breeze**
+- Akses download e-book otomatis setelah pembayaran sukses
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 1) Navigasi & UI
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Saat belum login
+Navbar:
+- Brand (Logo/Tulisan)
+- Home
+- Catalog
+- Cart
+- Login | Register
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Saat sudah login
+Navbar:
+- Brand (Logo/Tulisan)
+- Home
+- Catalog
+- Cart
+- My Account (dropdown):
+  - Dashboard (menyesuaikan role)
+  - Profile
+  - Logout
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 2) Role & Hak Akses (RBAC)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Role default:
+- `user`
+- `publisher`
+- `admin`
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Catatan:
+- Role **tidak disimpan** di kolom `users`.
+- Role disimpan oleh Spatie di tabel:
+  - `roles`
+  - `model_has_roles`
 
-## Laravel Sponsors
+### User
+- Melihat riwayat transaksi (sukses/gagal/expired/pending)
+- Download e-book jika order **PAID**
+- Lihat detail order & status
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Publisher
+- CRUD buku (My Studio)
+- Melihat saldo/pendapatan (untuk pencairan: hubungi admin)
 
-### Premium Partners
+### Admin
+- Kelola user & role
+- Kelola buku
+- Kelola order & pembayaran (termasuk tindakan manual confirm bila diperlukan)
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+---
 
-## Contributing
+## 3) Flow Transaksi & Pembayaran
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. User memilih buku → masuk cart
+2. Checkout → sistem membuat `orders` status `PENDING`
+3. Sistem generate `unique_code` (kode unik) untuk membedakan transaksi (karena API mutasi hanya 3 data terbaru)
+4. Sistem memanggil API QRIS statis→dinamis untuk nominal `total_amount` dan menyimpan data QR ke tabel `payments`
+5. User melakukan pembayaran via QRIS
+6. Sistem melakukan pengecekan mutasi:
+   - Cocokkan nominal + kode unik (sesuai strategi matching)
+   - Cegah double-claim: simpan mutasi yang sudah dipakai ke `used_mutations`
+7. Jika cocok → set order `PAID`, set `paid_at`, aktifkan akses download
+8. Jika melewati `expires_at` → set `EXPIRED` dan cleanup QR payload/image
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 4) Integrasi API
 
-## Security Vulnerabilities
+### A) API QRIS Statis → Dinamis
+Base URL (default):
+- `https://qrisin-three.vercel.app`
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Endpoint:
+- `POST /api/generate`
 
-## License
+Body JSON:
+```json
+{
+  "qris_raw": "000201010212...",
+  "amount": "15000"
+}
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-"# Tubes-WebPro" 
+Response:
+```json
+{
+  "status": true,
+  "qris_dynamic": "000201010212...",
+  "qr_png": "data:image/png;base64,..."
+}
+```
+
+### B) API Mutasi (Premium Media)
+Endpoint:
+- `POST https://premium-media.id/apiv3/mutasi`
+
+Body (x-www-form-urlencoded):
+- `username`
+- `token`
+- `id`
+
+Response berisi array **3 mutasi terbaru**.
+
+---
+
+## 5) Tech Stack
+- PHP 8.x
+- Laravel + Vite
+- Laravel Breeze (Auth UI kit)
+- TailwindCSS
+- MySQL/MariaDB
+- Spatie Laravel Permission (RBAC)
+- Laravel HTTP Client (untuk call API QRIS & Mutasi)
+
+---
+
+## 6) Cara Clone & Setup Lokal
+
+### Prasyarat
+- PHP 8.x
+- Composer
+- Node.js + NPM
+- MySQL/MariaDB
+
+### Step-by-step
+1) Clone repo
+```bash
+git clone https://github.com/sofwanrsd/Tubes-WebPro.git
+cd Tubes-WebPro
+```
+
+2) Install dependency PHP
+```bash
+composer install
+```
+
+3) Buat `.env`
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+4) Set database di `.env`
+```env
+DB_DATABASE=dimz_store
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+5) Set ENV untuk API (semua bisa kamu ubah via `.env`)
+```env
+# APP
+APP_NAME="Dimz Store"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://127.0.0.1:8000
+
+# QRIS
+QRIS_DYNAMIC_BASE_URL=https://qrisin-three.vercel.app
+QRIS_STATIC_RAW=000201010212...ISI_QRIS_RAW_KAMU...
+# Untuk lokal Windows kadang SSL bermasalah → boleh false
+QRIS_HTTP_VERIFY_SSL=false
+
+# MUTASI
+MUTASI_BASE_URL=https://premium-media.id
+MUTASI_USERNAME=xxxxx
+MUTASI_TOKEN=xxxxx
+MUTASI_ID=xxxxx
+```
+
+6) Migrate + seed
+```bash
+php artisan migrate
+php artisan db:seed
+```
+
+7) Install dependency frontend
+```bash
+npm install
+npm run dev
+```
+
+8) Jalankan server
+```bash
+php artisan serve
+```
+
+9) (Jika ada fitur download dari storage)
+```bash
+php artisan storage:link
+```
+
+---
+
+## 7) Default Role Saat Register
+Setiap user baru akan otomatis mendapat role default **`user`** pada proses register.
+
+Jika ada user lama belum punya role:
+```bash
+php artisan tinker
+```
+```php
+$u = \App\Models\User::where('email', 'emailkamu@example.com')->first();
+$u->assignRole('user');
+```
+
+---
+
+## 8) Scheduler Auto-Check (Opsional)
+Jika kamu mengaktifkan auto-check pembayaran via scheduler:
+
+Linux cron:
+```bash
+* * * * * php /path/to/project/artisan schedule:run >> /dev/null 2>&1
+```
+
+Local testing:
+```bash
+php artisan schedule:work
+```
+
+---
+
+## 9) Deployment Notes (Ringkas)
+```bash
+composer install --no-dev --optimize-autoloader
+php artisan migrate --force
+npm ci
+npm run build
+php artisan optimize:clear
+```
+
+---
+
+## 10) Troubleshooting
+
+### A) Error RoleMiddleware tidak ditemukan
+Jika pakai Spatie v6, namespace middleware adalah:
+- `Spatie\Permission\Middleware\RoleMiddleware`
+bukan `Spatie\Permission\Middlewares\RoleMiddleware`.
+
+Cek di `app/Http/Kernel.php`:
+```php
+'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+```
+
+### B) Payment error saat generate QR
+Pastikan:
+- `QRIS_STATIC_RAW` terisi benar
+- `QRIS_DYNAMIC_BASE_URL` benar
+- Coba set `QRIS_HTTP_VERIFY_SSL=false` saat lokal bila ada masalah SSL
+
+### C) Perubahan `.env` tidak kebaca
+```bash
+php artisan optimize:clear
+php artisan config:clear
+```
+
+### D) Warning openssl already loaded
+Itu dari konfigurasi PHP (openssl loaded dua kali). Biasanya tidak fatal.
+Perbaiki dengan memastikan `extension=openssl` hanya aktif 1x di `php.ini`.
+
+---
+
+## 11) Git: Push Project ke Repo (jika repo masih kosong)
+Dari folder project Laravel:
+```bash
+git init
+git add .
+git commit -m "Initial commit: Dimz Store"
+git branch -M main
+git remote add origin https://github.com/sofwanrsd/Tubes-WebPro.git
+git push -u origin main
+```
+
+Checklist sebelum push:
+- `.env` jangan ikut commit (pastikan ada di `.gitignore`)
+- `vendor/` dan `node_modules/` jangan ikut commit
+- Pastikan `.env.example` tersedia untuk setup orang lain
