@@ -1,52 +1,74 @@
 <x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
-        @csrf
+    <div class="auth-page">
+        <div class="container" id="container">
 
-        <!-- Name -->
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+            {{-- REGISTER FORM (POST /register) --}}
+            <div class="container right-panel-active" id="container">
+                <form method="POST" action="{{ route('register') }}">
+                    @csrf
+                    <h1>Create Account</h1>
+                    <span>or use your email for registration</span>
+
+                    <input type="text" name="name" placeholder="Name" value="{{ old('name') }}" required autofocus />
+                    <input type="email" name="email" placeholder="Email" value="{{ old('email') }}" required />
+                    <input type="password" name="password" placeholder="Password" required />
+                    <input type="password" name="password_confirmation" placeholder="Confirm Password" required />
+
+                    @if ($errors->any())
+                        <div style="margin-top:10px;color:#b91c1c;font-size:12px;text-align:left;width:100%">
+                            <ul style="padding-left:16px;">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <button type="submit">Sign Up</button>
+                </form>
+            </div>
+
+            {{-- LOGIN FORM (POST /login) --}}
+            <div class="form-container sign-in-container">
+                <form method="POST" action="{{ route('login') }}">
+                    @csrf
+                    <h1>Sign in</h1>
+                    <span>or use your account</span>
+
+                    <input type="email" name="email" placeholder="Email" value="{{ old('email') }}" required />
+                    <input type="password" name="password" placeholder="Password" required />
+
+                    <div style="width:100%; text-align:left; margin-top:6px;">
+                        <label style="font-size:12px;">
+                            <input type="checkbox" name="remember" style="width:auto; margin-right:6px;">
+                            Remember me
+                        </label>
+                    </div>
+
+                    @if (Route::has('password.request'))
+                        <a href="{{ route('password.request') }}">Forgot your password?</a>
+                    @endif
+
+                    <button type="submit">Sign In</button>
+                </form>
+            </div>
+
+            {{-- OVERLAY --}}
+            <div class="overlay-container">
+                <div class="overlay">
+                    <div class="overlay-panel overlay-left">
+                        <h1>Welcome Back!</h1>
+                        <p>To keep connected with us please login with your personal info</p>
+                        <button class="ghost" type="button" id="signIn">Sign In</button>
+                    </div>
+                    <div class="overlay-panel overlay-right">
+                        <h1>Hello, Friend!</h1>
+                        <p>Enter your personal details and start journey with us</p>
+                        <button class="ghost" type="button" id="signUp">Sign Up</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
-
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
-                {{ __('Already registered?') }}
-            </a>
-
-            <x-primary-button class="ms-4">
-                {{ __('Register') }}
-            </x-primary-button>
-        </div>
-    </form>
+    </div>
 </x-guest-layout>

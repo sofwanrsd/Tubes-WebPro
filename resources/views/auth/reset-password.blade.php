@@ -1,39 +1,47 @@
 <x-guest-layout>
-    <form method="POST" action="{{ route('password.store') }}">
-        @csrf
+  <div class="auth-page">
+    <div class="container auth-single">
+      <div class="form-container sign-in-container">
+        <form method="POST" action="{{ route('password.store') }}">
+          @csrf
 
-        <!-- Password Reset Token -->
-        <input type="hidden" name="token" value="{{ $request->route('token') }}">
+          <h1>Reset Password</h1>
+          <span>Set your new password</span>
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+          <input type="hidden" name="token" value="{{ $request->route('token') }}"/>
+
+          <input type="email" name="email" placeholder="Email"
+                 value="{{ old('email', $request->email) }}" required autofocus />
+
+          <input type="password" name="password" placeholder="New Password" required />
+          <input type="password" name="password_confirmation" placeholder="Confirm Password" required />
+
+          @if ($errors->any())
+            <div style="margin-top:10px;color:#b91c1c;font-size:12px;text-align:left;width:100%">
+              <ul style="padding-left:16px;">
+                @foreach ($errors->all() as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+            </div>
+          @endif
+
+          <button type="submit">Reset</button>
+          <a href="{{ route('login') }}">Back to Sign In</a>
+        </form>
+      </div>
+
+      <div class="overlay-container">
+        <div class="overlay">
+          <div class="overlay-panel overlay-right">
+            <h1>Almost There!</h1>
+            <p>Make it strong and easy to remember.</p>
+            <a href="{{ route('login') }}">
+              <button class="ghost" type="button">SIGN IN</button>
+            </a>
+          </div>
         </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                                type="password"
-                                name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Reset Password') }}
-            </x-primary-button>
-        </div>
-    </form>
+      </div>
+    </div>
+  </div>
 </x-guest-layout>

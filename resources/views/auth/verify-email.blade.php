@@ -1,31 +1,52 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
-    </div>
-
-    @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
-        </div>
-    @endif
-
-    <div class="mt-4 flex items-center justify-between">
+  <div class="auth-page">
+    <div class="container auth-single">
+      <div class="form-container sign-in-container">
         <form method="POST" action="{{ route('verification.send') }}">
-            @csrf
+          @csrf
+          <h1>Verify Email</h1>
+          <span>Check your inbox</span>
 
-            <div>
-                <x-primary-button>
-                    {{ __('Resend Verification Email') }}
-                </x-primary-button>
+          <p style="font-size:12px;line-height:18px;margin:12px 0;">
+            We’ve sent you a verification link. Click it to activate your account.
+          </p>
+
+          @if (session('status') === 'verification-link-sent')
+            <div style="margin-top:10px;color:#065f46;font-size:12px;">
+              New verification link sent ✅
             </div>
+          @endif
+
+          <button type="submit">Resend Link</button>
         </form>
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
+        <form method="POST" action="{{ route('logout') }}" style="margin-top:10px;">
+          @csrf
+          <button type="submit" class="ghost" style="border-color:#FF4B2B;color:#FF4B2B;">Logout</button>
+        </form>
+      </div>
 
-            <button type="submit" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {{ __('Log Out') }}
+      <div class="overlay-container">
+        <div class="overlay">
+          <div class="overlay-panel overlay-right">
+            <h1>One More Step</h1>
+            <p>Verify your email to unlock full access.</p>
+
+            {{-- IMPORTANT: ini bukan link ke /login langsung (biar gak loop).
+                 Tombol ini logout via JS, lalu redirect ke login. --}}
+            <button
+              class="ghost"
+              type="button"
+              data-logout-to-login
+              data-logout-url="{{ route('logout') }}"
+              data-login-url="{{ route('login') }}"
+            >
+              SIGN IN
             </button>
-        </form>
+
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </x-guest-layout>
