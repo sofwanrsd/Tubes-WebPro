@@ -24,6 +24,13 @@
                 @endguest
 
                 @auth
+                    @php
+                        $u = auth()->user();
+                        $isAdmin = $u && $u->hasRole('admin');
+                        $isPublisher = $u && $u->hasRole('publisher');
+                        $isUserOnly = $u && $u->hasRole('user') && !$isAdmin && !$isPublisher;
+                    @endphp
+
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
                             <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
@@ -37,41 +44,40 @@
                         </x-slot>
 
                         <x-slot name="content">
-                            <x-dropdown-link :href="route('dashboard')">
-                                Dashboard
-                            </x-dropdown-link>
+                            {{-- Dashboard = dashboard user untuk semua role --}}
+                            <x-dropdown-link :href="route('dashboard')">Dashboard</x-dropdown-link>
 
-                            <x-dropdown-link :href="route('orders.index')">
-                                Riwayat Transaksi
-                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('orders.index')">Riwayat Transaksi</x-dropdown-link>
 
-                            @php
-                                $u = auth()->user();
-                            @endphp
-
-                            @if($u && ($u->hasRole('publisher') || $u->hasRole('admin')))
-                                <x-dropdown-link :href="route('publisher.dashboard')">
-                                    My Studio
-                                </x-dropdown-link>
+                            {{-- Request upgrade hanya user murni --}}
+                            @if($isUserOnly)
+                                <form method="POST" action="{{ route('upgrade.publisher.request') }}">
+                                    @csrf
+                                    <x-dropdown-link :href="route('upgrade.publisher.request')"
+                                        onclick="event.preventDefault(); this.closest('form').submit();">
+                                        Request Upgrade Publisher
+                                    </x-dropdown-link>
+                                </form>
                             @endif
 
-                            @if($u && $u->hasRole('admin'))
-                                <x-dropdown-link :href="route('admin.dashboard')">
-                                    Admin Panel
-                                </x-dropdown-link>
+                            {{-- My Studio = dashboard publisher (publisher + admin) --}}
+                            @if($isPublisher || $isAdmin)
+                                <x-dropdown-link :href="route('publisher.dashboard')">My Studio</x-dropdown-link>
                             @endif
 
+                            {{-- Admin Panel = admin saja --}}
+                            @if($isAdmin)
+                                <x-dropdown-link :href="route('admin.dashboard')">Admin Panel</x-dropdown-link>
+                            @endif
 
-                            <x-dropdown-link :href="route('profile.edit')">
-                                Profile
-                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('profile.edit')">Profile</x-dropdown-link>
 
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-                                <x-dropdown-link :href="route('logout')"
-                                        onclick="event.preventDefault(); this.closest('form').submit();">
+                                <button type="submit"
+                                    class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     Logout
-                                </x-dropdown-link>
+                                </button>
                             </form>
                         </x-slot>
                     </x-dropdown>
@@ -91,11 +97,55 @@
         </div>
     </div>
 
+    {{-- Mobile menu --}}
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <a class="block px-4 py-2" href="{{ route('home') }}">Home</a>
             <a class="block px-4 py-2" href="{{ route('catalog.index') }}">Catalog</a>
             <a class="block px-4 py-2" href="{{ route('cart.index') }}">Cart</a>
+
+            @guest
+                <a class="block px-4 py-2" href="{{ route('login') }}">Login</a>
+                <a class="block px-4 py-2 font-semibold" href="{{ route('register') }}">Register</a>
+            @endguest
+
+            @auth
+                @php
+                    $u = auth()->user();
+                    $isAdmin = $u && $u->hasRole('admin');
+                    $isPublisher = $u && $u->hasRole('publisher');
+                    $isUserOnly = $u && $u->hasRole('user') && !$isAdmin && !$isPublisher;
+                @endphp
+
+                <a class="block px-4 py-2" href="{{ route('dashboard') }}">Dashboard</a>
+                <a class="block px-4 py-2" href="{{ route('orders.index') }}">Riwayat Transaksi</a>
+
+                @if($isUserOnly)
+                    <form method="POST" action="{{ route('upgrade.publisher.request') }}">
+                        @csrf
+                        <button type="submit" class="block w-full text-left px-4 py-2">
+                            Request Upgrade Publisher
+                        </button>
+                    </form>
+                @endif
+
+                @if($isPublisher || $isAdmin)
+                    <a class="block px-4 py-2" href="{{ route('publisher.dashboard') }}">My Studio</a>
+                @endif
+
+                @if($isAdmin)
+                    <a class="block px-4 py-2" href="{{ route('admin.dashboard') }}">Admin Panel</a>
+                @endif
+
+                <a class="block px-4 py-2" href="{{ route('profile.edit') }}">Profile</a>
+
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="block w-full text-left px-4 py-2">
+                        Logout
+                    </button>
+                </form>
+            @endauth
         </div>
     </div>
 </nav>

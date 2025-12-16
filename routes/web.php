@@ -7,7 +7,6 @@ use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
@@ -15,9 +14,15 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Publisher\PublisherBookController;
 use App\Http\Controllers\Publisher\PublisherDashboardController;
+use App\Http\Controllers\PublisherUpgradeRequestController;
 use App\Http\Controllers\User\UserDashboardController;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Public
+|--------------------------------------------------------------------------
+*/
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.index');
@@ -28,12 +33,27 @@ Route::post('/cart/add/{bookId}', [CartController::class, 'add'])->name('cart.ad
 Route::post('/cart/remove/{bookId}', [CartController::class, 'remove'])->name('cart.remove');
 Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
 
+/*
+|--------------------------------------------------------------------------
+| Authenticated
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth'])->group(function () {
+
+    // profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/dashboard', [DashboardRedirectController::class, 'index'])->name('dashboard');
+    // Dashboard = dashboard user untuk SEMUA role (wajib verified)
+    Route::get('/dashboard', [UserDashboardController::class, 'index'])
+        ->middleware(['verified'])
+        ->name('dashboard');
+
+    // alias (opsional) kalau kamu tetap butuh /user/dashboard
+    Route::get('/user/dashboard', [UserDashboardController::class, 'index'])
+        ->middleware(['verified'])
+        ->name('user.dashboard');
 
     // checkout & payment
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
@@ -42,37 +62,60 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payment/{orderId}', [PaymentController::class, 'show'])->name('payment.show');
     Route::post('/payment/{orderId}/check', [PaymentController::class, 'check'])->name('payment.check');
 
-    // user orders
+    // orders
     Route::get('/my/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/my/orders/{orderId}', [OrderController::class, 'show'])->name('orders.show');
-
     Route::get('/my/orders/{orderId}/download/{bookId}', [DownloadController::class, 'download'])->name('orders.download');
 
-    // USER dashboard
-    Route::get('/user/dashboard', [UserDashboardController::class, 'index'])
-        ->middleware('role:user|publisher|admin')
-        ->name('user.dashboard');
+    // request upgrade publisher (user -> admin email)
+    Route::post('/upgrade/publisher', [PublisherUpgradeRequestController::class, 'store'])
+        ->middleware(['verified'])
+        ->name('upgrade.publisher.request');
 
-    // PUBLISHER
-    Route::prefix('publisher')->name('publisher.')->middleware('role:publisher|admin')->group(function () {
-        Route::get('/dashboard', [PublisherDashboardController::class, 'index'])->name('dashboard');
-        Route::resource('/books', PublisherBookController::class)->names('books');
-    });
+    /*
+    |--------------------------------------------------------------------------
+    | Publisher
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('publisher')
+        ->name('publisher.')
+        ->middleware(['role:publisher|admin'])
+        ->group(function () {
+            Route::get('/dashboard', [PublisherDashboardController::class, 'index'])->name('dashboard');
+            Route::resource('/books', PublisherBookController::class)->names('books');
+        });
 
-    // ADMIN
-    Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
-        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    /*
+    |--------------------------------------------------------------------------
+    | Admin
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('admin')
+        ->name('admin.')
+        ->middleware(['role:admin'])
+        ->group(function () {
 
-        Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
-        Route::post('/users/{userId}/role', [AdminUserController::class, 'updateRole'])->name('users.role');
+            Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-        Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
-        Route::get('/orders/{orderId}', [AdminOrderController::class, 'show'])->name('orders.show');
-        Route::post('/orders/{orderId}/manual-confirm', [AdminOrderController::class, 'manualConfirm'])->name('orders.manual_confirm');
+            Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+            Route::post('/users/{userId}/role', [AdminUserController::class, 'updateRole'])->name('users.role');
 
-        Route::get('/books', [AdminBookController::class, 'index'])->name('books.index');
-        Route::post('/books/{bookId}/status', [AdminBookController::class, 'setStatus'])->name('books.status');
-    });
+            Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
+            Route::get('/orders/{orderId}', [AdminOrderController::class, 'show'])->name('orders.show');
+            Route::post('/orders/{orderId}/manual-confirm', [AdminOrderController::class, 'manualConfirm'])->name('orders.manual_confirm');
+
+            Route::get('/books', [AdminBookController::class, 'index'])->name('books.index');
+            Route::post('/books/{bookId}/status', [AdminBookController::class, 'setStatus'])->name('books.status');
+
+            // approve/reject upgrade (signed link)
+            Route::get('/upgrade-requests/{upgradeRequest}/approve', [PublisherUpgradeRequestController::class, 'approve'])
+                ->middleware(['signed'])
+                ->name('upgrade_requests.approve');
+
+            Route::get('/upgrade-requests/{upgradeRequest}/reject', [PublisherUpgradeRequestController::class, 'reject'])
+                ->middleware(['signed'])
+                ->name('upgrade_requests.reject');
+        });
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
