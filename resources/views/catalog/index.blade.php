@@ -1,5 +1,4 @@
 <x-app-layout>
-<<<<<<< HEAD
     {{-- HERO --}}
     <div class="relative bg-gradient-to-br from-red-900 via-red-800 to-black py-14 sm:py-20 overflow-hidden">
         <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 30px 30px;"></div>
@@ -36,64 +35,10 @@
                         <div class="rounded-xl border border-white/10 bg-black/20 backdrop-blur px-4 py-3">
                             <div class="text-xs text-white/60 font-semibold">Delivery</div>
                             <div class="text-sm text-white font-extrabold mt-1">Auto</div>
-=======
-    <div class="py-10">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <h2 class="text-2xl font-bold mb-6">Catalog</h2>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-                @foreach($books as $book)
-                    <div
-                        class="bg-white rounded-xl shadow-sm hover:shadow-lg transition duration-300 overflow-hidden group"
-                    >
-                        {{-- Cover --}}
-                        <div class="h-52 bg-gray-100 overflow-hidden">
-                            @if($book->cover_path)
-                                <img
-                                    src="{{ asset('storage/'.$book->cover_path) }}"
-                                    alt="{{ $book->title }}"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                                >
-                            @else
-                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-                                    No Image
-                                </div>
-                            @endif
-                        </div>
-
-                        {{-- Content --}}
-                        <div class="p-5">
-                            <h3 class="font-semibold text-lg line-clamp-2">
-                                {{ $book->title }}
-                            </h3>
-
-                            <p class="mt-2 text-[#FF4B2B] font-bold text-lg">
-                                Rp {{ number_format($book->price, 0, ',', '.') }}
-                            </p>
-
-                            <div class="mt-4 flex items-center justify-between">
-                                <a
-                                    href="{{ route('catalog.show', $book->slug) }}"
-                                    class="text-sm text-gray-600 hover:text-[#FF4B2B] transition"
-                                >
-                                    Detail
-                                </a>
-
-                                <form method="POST" action="{{ route('cart.add', $book->id) }}">
-                                    @csrf
-                                    <button
-                                        class="px-4 py-2 text-sm font-medium text-white bg-[#FF4B2B] rounded-lg hover:bg-[#e64326] transition"
-                                    >
-                                        Tambah
-                                    </button>
-                                </form>
-                            </div>
->>>>>>> 627639f4d33a3f7438a09914e7701c92fd66a1db
                         </div>
                     </div>
                 </div>
 
-<<<<<<< HEAD
                 {{-- RIGHT: SEARCH + SORT --}}
                 <div class="w-full">
                     <div class="rounded-2xl border border-white/10 bg-black/20 backdrop-blur p-5">
@@ -131,11 +76,6 @@
                         </div>
                     </div>
                 </div>
-=======
-            {{-- Pagination --}}
-            <div class="mt-8">
-                {{ $books->links() }}
->>>>>>> 627639f4d33a3f7438a09914e7701c92fd66a1db
             </div>
         </div>
     </div>
