@@ -13,6 +13,25 @@ use Spatie\Permission\Models\Role;
 class PublisherUpgradeRequestController extends Controller
 {
     /**
+     * Show the form to request upgrade.
+     */
+    public function create()
+    {
+        $user = auth()->user();
+
+        // Jika sudah publisher/admin, redirect ke dashboard
+        if ($user->hasRole('publisher') || $user->hasRole('admin')) {
+             return redirect()->route('dashboard');
+        }
+
+        // Cek apakah ada request pending
+        $hasPendingRequest = \App\Models\PublisherUpgradeRequest::where('user_id', $user->id)
+            ->where('status', \App\Models\PublisherUpgradeRequest::STATUS_PENDING)
+            ->exists();
+
+        return view('pages.upgrade-publisher', compact('hasPendingRequest'));
+    }
+    /**
      * USER submit request upgrade publisher.
      */
     public function store(Request $request)
@@ -68,9 +87,27 @@ class PublisherUpgradeRequestController extends Controller
     }
 
     /**
-     * ADMIN approve via signed link.
+     * ADMIN: Show approval confirmation page (GET).
      */
-    public function approve(PublisherUpgradeRequest $upgradeRequest, Request $request)
+    public function showApprove(PublisherUpgradeRequest $upgradeRequest, Request $request)
+    {
+        if (!$request->user()->hasRole('admin')) {
+            abort(403);
+        }
+
+        if ($upgradeRequest->status !== PublisherUpgradeRequest::STATUS_PENDING) {
+            return redirect()->route('admin.dashboard')->with('error', 'Request ini sudah diproses.');
+        }
+
+        $upgradeRequest->load('user');
+
+        return view('admin.upgrade-requests.show', compact('upgradeRequest'));
+    }
+
+    /**
+     * ADMIN: Approve upgrade request (POST).
+     */
+    public function doApprove(PublisherUpgradeRequest $upgradeRequest, Request $request)
     {
         // extra safety (harusnya sudah lewat middleware role:admin)
         if (!$request->user()->hasRole('admin')) {
@@ -106,7 +143,7 @@ class PublisherUpgradeRequestController extends Controller
         // kirim email ke user bahwa upgrade sukses
         $user->notify(new UserPublisherUpgradeApproved());
 
-        return redirect()->route('admin.dashboard')->with('success', 'Upgrade Publisher berhasil diproses.');
+        return redirect()->route('admin.dashboard')->with('success', 'Upgrade Publisher berhasil disetujui.');
     }
 
     /**

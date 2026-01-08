@@ -1,4 +1,10 @@
-<x-app-layout>
+@php
+    // Extract unique genres and authors from the visible books for the filter dropdowns
+    $genres = $books->pluck('genre')->unique()->filter()->values();
+    $authors = $books->pluck('publisher.name')->unique()->filter()->values();
+@endphp
+
+<x-main-layout>
     {{-- HERO --}}
     <div class="relative bg-gradient-to-br from-red-900 via-red-800 to-black py-14 sm:py-20 overflow-hidden">
         <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 30px 30px;"></div>
@@ -39,7 +45,7 @@
                     </div>
                 </div>
 
-                {{-- RIGHT: SEARCH + SORT --}}
+                {{-- RIGHT: SEARCH + SORT + FILTER --}}
                 <div class="w-full">
                     <div class="rounded-2xl border border-white/10 bg-black/20 backdrop-blur p-5">
                         <div class="flex items-center justify-between gap-3 mb-3">
@@ -49,11 +55,12 @@
                             </div>
                         </div>
 
-                        <div class="text-xs font-semibold text-white/80 mb-2">Cari judul buku</div>
-                        <div class="flex flex-col sm:flex-row gap-2">
+                        {{-- Search --}}
+                        <div class="text-xs font-semibold text-white/80 mb-2">Cari judul</div>
+                        <div class="flex flex-col sm:flex-row gap-2 mb-4">
                             <input id="catalogSearch"
                                    type="text"
-                                   placeholder="Contoh: Algoritma, Basis Data..."
+                                   placeholder="Contoh: Algoritma..."
                                    class="w-full rounded-xl bg-black/30 border border-white/15 text-white placeholder-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/20">
                             <button id="catalogClear"
                                     type="button"
@@ -62,7 +69,30 @@
                             </button>
                         </div>
 
-                        <div class="mt-4 text-xs font-semibold text-white/80 mb-2">Urutkan</div>
+                        {{-- Filters Grid --}}
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div>
+                                <div class="text-xs font-semibold text-white/80 mb-2">Genre</div>
+                                <select id="catalogGenre" class="w-full rounded-xl bg-black/30 border border-white/15 text-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white/20">
+                                    <option value="">Semua Genre</option>
+                                    @foreach($genres as $g)
+                                        <option value="{{ strtolower($g) }}">{{ $g }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-white/80 mb-2">Penulis</div>
+                                <select id="catalogAuthor" class="w-full rounded-xl bg-black/30 border border-white/15 text-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white/20">
+                                    <option value="">Semua Penulis</option>
+                                    @foreach($authors as $a)
+                                        <option value="{{ strtolower($a) }}">{{ $a }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- Sort --}}
+                        <div class="text-xs font-semibold text-white/80 mb-2">Urutkan</div>
                         <select id="catalogSort"
                                 class="w-full rounded-xl bg-black/30 border border-white/15 text-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white/20">
                             <option value="az">Judul (A–Z)</option>
@@ -70,10 +100,6 @@
                             <option value="price_asc">Harga (Termurah)</option>
                             <option value="price_desc">Harga (Termahal)</option>
                         </select>
-
-                        <div class="mt-4 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-xs text-white/70">
-                            Tips: pakai <span class="text-white font-semibold">A–Z</span> buat cari cepat, atau urutkan harga buat nemu yang termurah.
-                        </div>
                     </div>
                 </div>
             </div>
@@ -105,6 +131,8 @@
                         class="catalog-card group rounded-2xl bg-white shadow-lg border border-gray-100 overflow-hidden hover:-translate-y-1 transition-all duration-300 relative"
                         data-title="{{ strtolower($book->title ?? '') }}"
                         data-price="{{ (int)($book->price ?? 0) }}"
+                        data-genre="{{ strtolower($book->genre ?? '') }}"
+                        data-author="{{ strtolower($book->publisher->name ?? '') }}"
                     >
                         {{-- Cover --}}
                         <div class="relative">
@@ -135,31 +163,66 @@
                         </div>
 
                         {{-- Body --}}
-                        <div class="p-6">
-                            <h3 class="text-lg font-extrabold text-gray-900 leading-snug line-clamp-2">
-                                {{ $book->title }}
-                            </h3>
+                        <div class="p-6 relative">
+                            {{-- Clickable Area for Detail (Covering Card) --}} 
+                            <a href="{{ route('catalog.show', $book->slug) }}" class="absolute inset-0 z-10"></a>
 
-                            <div class="mt-2 flex items-center justify-between">
+                            <div class="mb-3">
+                                <div class="text-xs font-semibold text-[#5C0F14] bg-[#5C0F14]/10 inline-block px-2 py-1 rounded-md mb-1">
+                                    {{ $book->genre ?? 'Umum' }}
+                                </div>
+                                <h3 class="text-lg font-extrabold text-gray-900 leading-snug line-clamp-2">
+                                    {{ $book->title }}
+                                </h3>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    Oleh: <span class="font-bold text-gray-700">{{ $book->publisher->name ?? 'Admin' }}</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between mb-4">
                                 <div class="text-sm text-gray-500">Harga</div>
-                                <div class="text-base font-extrabold text-red-800">
+                                <div class="text-base font-extrabold text-[#5C0F14]">
                                     Rp {{ number_format($book->price ?? 0, 0, ',', '.') }}
                                 </div>
                             </div>
 
-                            <div class="mt-5 flex gap-3">
+                            {{-- Buttons --}}
+                            <div class="flex gap-2 relative z-20">
+                                {{-- 1. Detail --}}
                                 <a href="{{ route('catalog.show', $book->slug) }}"
-                                   class="flex-1 px-4 py-3 rounded-xl border border-red-200 text-red-800 font-bold text-sm text-center hover:bg-red-50 transition">
+                                   class="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm text-center hover:bg-gray-50 transition">
                                     Detail
                                 </a>
 
-                                <form method="POST" action="{{ route('cart.add', $book->id) }}" class="flex-1">
-                                    @csrf
-                                    <button type="submit"
-                                            class="w-full px-4 py-3 rounded-xl bg-red-800 text-white font-extrabold text-sm hover:bg-red-700 transition shadow-[0_0_18px_rgba(185,28,28,0.25)]">
-                                        + Keranjang
+                                @php
+                                    $isOwned = in_array($book->id, $purchasedBookIds ?? []);
+                                @endphp
+
+                                @if($isOwned)
+                                    <button disabled
+                                            class="w-full px-3 py-2.5 rounded-xl bg-gray-100 text-gray-400 font-extrabold text-sm cursor-not-allowed border border-gray-200">
+                                        Dimiliki
                                     </button>
-                                </form>
+                                @else
+                                    {{-- 2. Beli --}}
+                                    <form method="POST" action="{{ route('cart.add', $book->id) }}" class="flex-1">
+                                        @csrf
+                                        <button type="submit"
+                                                class="w-full px-3 py-2.5 rounded-xl bg-[#5C0F14] text-[#E6B65C] font-extrabold text-sm hover:bg-[#4a0c10] transition shadow-md">
+                                            Beli
+                                        </button>
+                                    </form>
+
+                                    {{-- 3. Cart Icon (AJAX) --}}
+                                    <button type="button"
+                                            onclick="addToCartAjax(event, '{{ route('cart.add', $book->id) }}', this)"
+                                            class="px-3 py-2.5 rounded-xl border border-[#5C0F14] text-[#5C0F14] hover:bg-[#5C0F14] hover:text-[#E6B65C] transition group/cart"
+                                            title="Tambah ke Keranjang">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform group-active/cart:scale-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
+                                    </button>
+                                @endif
                             </div>
                         </div>
 
@@ -187,15 +250,15 @@
         </div>
     </div>
 
-    {{-- Universal Footer --}}
-    <x-footer />
-
-    {{-- Client-side search + sort (no backend change) --}}
+    {{-- Client-side search + sort + filter --}}
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         const input = document.getElementById('catalogSearch');
         const clear = document.getElementById('catalogClear');
         const sort  = document.getElementById('catalogSort');
+        const genre = document.getElementById('catalogGenre');
+        const author= document.getElementById('catalogAuthor');
+
         const grid  = document.getElementById('catalogGrid');
         const count = document.getElementById('catalogCount');
 
@@ -205,51 +268,133 @@
 
         const updateCount = (n) => { if (count) count.textContent = String(n); };
 
-        const applySearch = () => {
+        const applyAll = () => {
           const q = (input?.value || '').trim().toLowerCase();
-          let visible = 0;
+          const s = (sort?.value || 'az');
+          const g = (genre?.value || '').toLowerCase();
+          const a = (author?.value || '').toLowerCase();
 
-          getCards().forEach((c) => {
-            const t = (c.getAttribute('data-title') || '');
-            const ok = q === '' || t.includes(q);
-            c.style.display = ok ? '' : 'none';
-            if (ok) visible++;
+          const cards = getCards();
+          let visibleCount = 0;
+
+          // 1. FILTER
+          cards.forEach(c => {
+             const title = (c.getAttribute('data-title') || '');
+             const cGenre = (c.getAttribute('data-genre') || '');
+             const cAuthor = (c.getAttribute('data-author') || '');
+
+             const matchText = (q === '' || title.includes(q));
+             const matchGenre = (g === '' || cGenre.includes(g) || cGenre === g);
+             const matchAuthor = (a === '' || cAuthor.includes(a) || cAuthor === a);
+
+             if (matchText && matchGenre && matchAuthor) {
+                 c.style.display = '';
+                 visibleCount++;
+             } else {
+                 c.style.display = 'none';
+             }
           });
 
-          updateCount(visible);
-        };
+          updateCount(visibleCount);
 
-        const applySort = () => {
-          const mode = (sort?.value || 'az');
-          const cards = getCards();
-
+          // 2. SORT
+          // Only sort visible cards? Actually we can sort all and display updates handles visibility.
+          // But appending reorders DOM.
+          
           const visibleCards = cards.filter(c => c.style.display !== 'none');
           const hiddenCards  = cards.filter(c => c.style.display === 'none');
 
           const titleOf = (c) => (c.getAttribute('data-title') || '');
           const priceOf = (c) => parseInt(c.getAttribute('data-price') || '0', 10);
 
-          visibleCards.sort((a, b) => {
-            if (mode === 'az') return titleOf(a).localeCompare(titleOf(b));
-            if (mode === 'za') return titleOf(b).localeCompare(titleOf(a));
-            if (mode === 'price_asc') return priceOf(a) - priceOf(b);
-            if (mode === 'price_desc') return priceOf(b) - priceOf(a);
+          visibleCards.sort((x, y) => {
+            if (s === 'az') return titleOf(x).localeCompare(titleOf(y));
+            if (s === 'za') return titleOf(y).localeCompare(titleOf(x));
+            if (s === 'price_asc') return priceOf(x) - priceOf(y);
+            if (s === 'price_desc') return priceOf(y) - priceOf(x);
             return 0;
           });
 
+          // Re-append to grid
           [...visibleCards, ...hiddenCards].forEach(c => grid.appendChild(c));
         };
 
-        const applyAll = () => {
-          applySearch();
-          applySort();
-        };
-
+        // Events
         input?.addEventListener('input', applyAll);
-        clear?.addEventListener('click', () => { if (input) input.value = ''; applyAll(); });
         sort?.addEventListener('change', applyAll);
+        genre?.addEventListener('change', applyAll);
+        author?.addEventListener('change', applyAll);
 
+        clear?.addEventListener('click', () => { 
+            if (input) input.value = ''; 
+            // Let's just clear text as the button is near text input.
+            // If user wants full reset, they manually reset selects.
+            // But let's act as "Reset All" since it says "Reset".
+            if (genre) genre.value = '';
+            if (author) author.value = '';
+            applyAll(); 
+        });
+
+        // Initial run
         applyAll();
       });
     </script>
-</x-app-layout>
+    <script>
+        // AJAX Add to Cart (Shared Logic)
+        async function addToCartAjax(event, url, btn) {
+            event.preventDefault();
+            
+            // Visual Feedback Parsing
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            // Keep button size consistent
+            btn.style.width = getComputedStyle(btn).width;
+            btn.innerHTML = `
+                <svg class="animate-spin h-5 w-5 mx-auto text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            `;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Success State
+                    btn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    `;
+
+                    // Dispatch Custom Event to Update Navbar
+                    window.dispatchEvent(new CustomEvent('cart-updated', { 
+                        detail: { count: data.cart_count } 
+                    }));
+
+                } else {
+                    console.error('Failed to add to cart');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            } finally {
+                // Reset after 1s
+                setTimeout(() => {
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                    btn.style.width = '';
+                }, 1000);
+            }
+        }
+    </script>
+</x-main-layout>

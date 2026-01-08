@@ -8,13 +8,27 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::query()
+        $query = Order::query()
             ->where('user_id', auth()->id())
-            ->latest()
-            ->with('items.book')
-            ->paginate(15);
+            ->latest();
 
-        return view('orders.index', compact('orders'));
+        // 1. Search (ID)
+        if ($search = request('search')) {
+            $query->where('id', 'like', "%{$search}%");
+        }
+
+        // 2. Filter Status
+        if ($status = request('status')) {
+            if ($status !== 'all') {
+                $query->where('status', $status);
+            }
+        }
+
+        // 3. Per Page
+        $perPage = request('per_page', 10);
+        $orders = $query->with('items.book')->paginate($perPage)->withQueryString();
+
+        return view('user.orders.index', compact('orders'));
     }
 
     public function show(int $orderId)
@@ -25,6 +39,6 @@ class OrderController extends Controller
             ->with(['items.book', 'payment'])
             ->firstOrFail();
 
-        return view('orders.show', compact('order'));
+        return view('user.orders.show', compact('order'));
     }
 }

@@ -1,4 +1,5 @@
 <footer class="border-t border-white/10 bg-gradient-to-br from-red-950 via-red-900 to-black text-white">
+    @php $isHome = request()->routeIs('home'); @endphp
     <div class="max-w-7xl mx-auto px-6 py-12">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
 
@@ -50,11 +51,10 @@
             <div>
                 <h3 class="text-sm font-extrabold tracking-wide uppercase text-white/90">Informasi</h3>
                 <ul class="mt-4 space-y-2 text-sm">
-                    {{-- ini link placeholder, ganti route kalau nanti udah ada --}}
-                    <li><a href="#" class="text-white/70 hover:text-white transition">About</a></li>
-                    <li><a href="#" class="text-white/70 hover:text-white transition">Syarat & Ketentuan</a></li>
-                    <li><a href="#" class="text-white/70 hover:text-white transition">Kebijakan Privasi</a></li>
-                    <li><a href="#" class="text-white/70 hover:text-white transition">FAQ / Bantuan</a></li>
+                    <li><a href="{{ $isHome ? '#' : route('home') }}" class="text-white/70 hover:text-white transition">About</a></li>
+                    <li><a href="{{ route('terms') }}" class="text-white/70 hover:text-white transition">Syarat & Ketentuan</a></li>
+                    <li><a href="{{ route('privacy') }}" class="text-white/70 hover:text-white transition">Kebijakan Privasi</a></li>
+                    <li><a href="{{ route('home').'#faq' }}" class="text-white/70 hover:text-white transition">FAQ / Bantuan</a></li>
                 </ul>
             </div>
 
@@ -67,9 +67,6 @@
                     </p>
                     <p>
                         WA: <span class="text-white/90 font-semibold">08xx-xxxx-xxxx</span>
-                    </p>
-                    <p class="text-xs text-white/50">
-                        *Silakan ganti kontak ini sesuai data kamu.
                     </p>
                 </div>
 
@@ -90,11 +87,11 @@
                 © 2025 Dimz Store - Fakultas Informatika Universitas Telkom.
             </p>
             <div class="flex items-center gap-4 text-xs">
-                <a href="#" class="text-white/50 hover:text-white transition">Privacy</a>
+                <a href="{{ route('privacy') }}" class="text-white/50 hover:text-white transition">Privacy</a>
                 <span class="text-white/20">•</span>
-                <a href="#" class="text-white/50 hover:text-white transition">Terms</a>
+                <a href="{{ route('terms') }}" class="text-white/50 hover:text-white transition">Terms</a>
                 <span class="text-white/20">•</span>
-                <a href="#" class="text-white/50 hover:text-white transition">Support</a>
+                <a href="{{ $isHome ? '#faq' : route('home').'#faq' }}" class="text-white/50 hover:text-white transition">Support</a>
             </div>
         </div>
     </div>

@@ -26,6 +26,7 @@ class PublisherBookController extends Controller
     {
         $request->validate([
             'title' => ['required', 'string', 'max:200'],
+            'genre' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'integer', 'min:0'],
             'status' => ['required', 'in:draft,published,unpublished'],
@@ -53,6 +54,7 @@ class PublisherBookController extends Controller
         $book = Book::create([
             'publisher_id' => auth()->id(),
             'title' => $request->title,
+            'genre' => $request->genre,
             'slug' => $slug,
             'description' => $request->description,
             'price' => (int) $request->price,
@@ -78,6 +80,7 @@ class PublisherBookController extends Controller
 
         $request->validate([
             'title' => ['required', 'string', 'max:200'],
+            'genre' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'integer', 'min:0'],
             'status' => ['required', 'in:draft,published,unpublished'],
@@ -114,6 +117,7 @@ class PublisherBookController extends Controller
         }
 
         $book->title = $request->title;
+        $book->genre = $request->genre;
         $book->description = $request->description;
         $book->price = (int) $request->price;
         $book->status = $request->status;

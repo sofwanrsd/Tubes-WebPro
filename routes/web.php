@@ -14,16 +14,18 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Publisher\PublisherBookController;
 use App\Http\Controllers\Publisher\PublisherDashboardController;
+use App\Http\Controllers\Publisher\PublisherOrderController;
 use App\Http\Controllers\PublisherUpgradeRequestController;
 use App\Http\Controllers\User\UserDashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
-|--------------------------------------------------------------------------
 | Public
-|--------------------------------------------------------------------------
 */
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+Route::view('/terms', 'pages.terms')->name('terms');
+Route::view('/privacy', 'pages.privacy')->name('privacy');
 
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.index');
 Route::get('/catalog/{slug}', [CatalogController::class, 'show'])->name('catalog.show');
@@ -34,9 +36,7 @@ Route::post('/cart/remove/{bookId}', [CartController::class, 'remove'])->name('c
 Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
 
 /*
-|--------------------------------------------------------------------------
 | Authenticated
-|--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
 
@@ -61,21 +61,27 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/payment/{orderId}', [PaymentController::class, 'show'])->name('payment.show');
     Route::post('/payment/{orderId}/check', [PaymentController::class, 'check'])->name('payment.check');
+    Route::post('/payment/{orderId}/cancel', [PaymentController::class, 'cancel'])->name('payment.cancel');
 
     // orders
     Route::get('/my/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/my/orders/{orderId}', [OrderController::class, 'show'])->name('orders.show');
     Route::get('/my/orders/{orderId}/download/{bookId}', [DownloadController::class, 'download'])->name('orders.download');
 
+    // Library: Buku yang sudah dibeli
+    Route::get('/my-books', [UserDashboardController::class, 'library'])->name('library.index');
+
     // request upgrade publisher (user -> admin email)
+    Route::get('/upgrade-publisher', [PublisherUpgradeRequestController::class, 'create'])
+        ->middleware(['verified'])
+        ->name('upgrade.publisher.create');
+
     Route::post('/upgrade/publisher', [PublisherUpgradeRequestController::class, 'store'])
         ->middleware(['verified'])
         ->name('upgrade.publisher.request');
 
     /*
-    |--------------------------------------------------------------------------
     | Publisher
-    |--------------------------------------------------------------------------
     */
     Route::prefix('publisher')
         ->name('publisher.')
@@ -83,12 +89,11 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
             Route::get('/dashboard', [PublisherDashboardController::class, 'index'])->name('dashboard');
             Route::resource('/books', PublisherBookController::class)->names('books');
+            Route::get('/orders', [PublisherOrderController::class, 'index'])->name('orders.index');
         });
 
     /*
-    |--------------------------------------------------------------------------
     | Admin
-    |--------------------------------------------------------------------------
     */
     Route::prefix('admin')
         ->name('admin.')
@@ -107,13 +112,15 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/books', [AdminBookController::class, 'index'])->name('books.index');
             Route::post('/books/{bookId}/status', [AdminBookController::class, 'setStatus'])->name('books.status');
 
-            // approve/reject upgrade (signed link)
-            Route::get('/upgrade-requests/{upgradeRequest}/approve', [PublisherUpgradeRequestController::class, 'approve'])
+            // approve/reject upgrade (confirmation page)
+            Route::get('/upgrade-requests/{upgradeRequest}', [PublisherUpgradeRequestController::class, 'showApprove'])
                 ->middleware(['signed'])
+                ->name('upgrade_requests.show');
+
+            Route::post('/upgrade-requests/{upgradeRequest}/approve', [PublisherUpgradeRequestController::class, 'doApprove'])
                 ->name('upgrade_requests.approve');
 
-            Route::get('/upgrade-requests/{upgradeRequest}/reject', [PublisherUpgradeRequestController::class, 'reject'])
-                ->middleware(['signed'])
+            Route::post('/upgrade-requests/{upgradeRequest}/reject', [PublisherUpgradeRequestController::class, 'reject'])
                 ->name('upgrade_requests.reject');
         });
 });
