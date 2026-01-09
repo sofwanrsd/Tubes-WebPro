@@ -26,6 +26,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             @foreach($myBooks as $item)
                 @php $book = $item->book; @endphp
+                @if(!$book) @continue @endif
                 <div class="group relative rounded-2xl bg-white border border-gray-100 shadow-lg overflow-hidden flex flex-col h-full hover:-translate-y-1 transition-all duration-300">
                     {{-- Cover --}}
                     <div class="relative w-full aspect-[3/4] overflow-hidden bg-gray-100">

@@ -42,7 +42,8 @@ class UserDashboardController extends Controller
 
         // Flatten items to get a list of "my books"
         // Use a collection to maybe unique them by book_id if user bought same book twice (unlikely for digital but safer)
-        $myBooks = $orders->flatMap->items->unique('book_id');
+        // Filter out items where the book has been deleted
+        $myBooks = $orders->flatMap->items->unique('book_id')->filter(fn($item) => $item->book !== null);
 
         return view('user.library', compact('myBooks'));
     }

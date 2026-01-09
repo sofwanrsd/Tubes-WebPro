@@ -48,11 +48,11 @@
                     </div>
 
                     {{-- Sidebar Component (Mobile Clone) --}}
-                    <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
+                    <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-[#5C0F14] px-6 pb-4">
                         <div class="flex h-16 shrink-0 items-center">
                              <a href="{{ route('home') }}" class="flex items-center gap-2">
-                                <span class="text-2xl font-black text-red-600 tracking-tighter">DIMZ</span>
-                                <span class="text-sm font-bold text-gray-400">STORE</span>
+                                <span class="text-2xl font-black text-[#E6B65C] tracking-tighter">DIMZ</span>
+                                <span class="text-sm font-bold text-gray-200">STORE</span>
                             </a>
                         </div>
                         

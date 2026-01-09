@@ -31,7 +31,6 @@
         @endphp
 
         <nav class="space-y-1 px-3">
-        <nav class="space-y-1 px-3">
             <div class="px-3 mb-2 text-xs font-semibold text-[#E6B65C]/70 uppercase tracking-wider">
                 Menu
             </div>

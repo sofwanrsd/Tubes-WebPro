@@ -76,7 +76,7 @@
                             </div>
                             <div class="flex-1">
                                 <h4 class="font-bold text-gray-900 text-lg">{{ $item->book->title ?? 'Buku dihapus' }}</h4>
-                                <div class="text-sm text-gray-500 mt-1">{{ $item->book->publisher->name ?? 'Publisher' }}</div>
+                                <div class="text-sm text-gray-500 mt-1">{{ $item->book?->publisher?->name ?? 'Publisher' }}</div>
                             </div>
                             <div class="text-right">
                                 <div class="font-bold text-gray-900 text-lg">Rp {{ number_format($item->price, 0, ',', '.') }}</div>

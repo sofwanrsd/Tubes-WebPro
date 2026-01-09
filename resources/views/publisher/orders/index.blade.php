@@ -13,7 +13,7 @@
 
         // Helper to get publisher's books from an order
         $publisherBooks = function($order) {
-            return $order->items->filter(fn($item) => $item->book->publisher_id == auth()->id());
+            return $order->items->filter(fn($item) => $item->book && $item->book->publisher_id == auth()->id());
         };
     @endphp
 
@@ -145,9 +145,9 @@
                                 <div class="flex flex-col gap-2">
                                      @foreach($myItems as $item)
                                         <div class="flex items-center gap-3">
-                                            @if($item->book && $item->book->cover_image)
+                                            @if($item->book && $item->book->cover_path)
                                                 <div class="flex-shrink-0 w-8 h-10 bg-gray-200 rounded overflow-hidden">
-                                                    <img src="{{ asset('storage/' . $item->book->cover_image) }}" class="w-full h-full object-cover">
+                                                    <img src="{{ asset('storage/' . $item->book->cover_path) }}" class="w-full h-full object-cover">
                                                 </div>
                                             @endif
                                             <div>
