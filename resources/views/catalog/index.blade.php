@@ -53,7 +53,6 @@
                         <div class="flex flex-col sm:flex-row gap-2">
                             <input id="catalogSearch"
                                    type="text"
-                                   placeholder="Contoh: Algoritma, Basis Data..."
                                    class="w-full rounded-xl bg-black/30 border border-white/15 text-white placeholder-white/40 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/20">
                             <button id="catalogClear"
                                     type="button"
@@ -72,7 +71,7 @@
                         </select>
 
                         <div class="mt-4 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-xs text-white/70">
-                            Tips: pakai <span class="text-white font-semibold">A–Z</span> buat cari cepat, atau urutkan harga buat nemu yang termurah.
+                            Tips: pakai <span class="text-white font-semibold">A–Z</span>
                         </div>
                     </div>
                 </div>
