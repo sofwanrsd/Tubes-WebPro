@@ -13,7 +13,19 @@ class CatalogController extends Controller
             ->latest()
             ->paginate(12);
 
-        return view('catalog.index', compact('books'));
+        $purchasedBookIds = [];
+        if (auth()->check()) {
+            // Get IDs of books in paid orders
+            $purchasedBookIds = auth()->user()->hasMany(\App\Models\Order::class)
+                ->where('status', 'paid')
+                ->with('items')
+                ->get()
+                ->flatMap->items
+                ->pluck('book_id')
+                ->toArray();
+        }
+
+        return view('catalog.index', compact('books', 'purchasedBookIds'));
     }
 
     public function show(string $slug)
@@ -23,6 +35,11 @@ class CatalogController extends Controller
             ->where('status', 'published')
             ->firstOrFail();
 
-        return view('catalog.show', compact('book'));
+        $isPurchased = false;
+        if (auth()->check()) {
+            $isPurchased = auth()->user()->hasPurchased($book->id);
+        }
+
+        return view('catalog.show', compact('book', 'isPurchased'));
     }
 }

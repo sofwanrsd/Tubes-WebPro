@@ -11,7 +11,28 @@ class AdminUserController extends Controller
 {
     public function index()
     {
-        $users = User::latest()->paginate(20);
+        $query = User::latest();
+
+        // 1. Search (Name/Email)
+        if ($search = request('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // 2. Role Filter (using Spatie permission HasRoles trait scope if available, or whereHas)
+        // Assuming simple role check or using Spatie's 'role' scope if the model uses HasRoles
+        if ($role = request('role')) {
+            if ($role !== 'all') {
+                $query->role($role);
+            }
+        }
+
+        // 3. Pagination
+        $perPage = request('per_page', 20);
+        $users = $query->paginate($perPage)->withQueryString();
+
         return view('admin.users.index', compact('users'));
     }
 

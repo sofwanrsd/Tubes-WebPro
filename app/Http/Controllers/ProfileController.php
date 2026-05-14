@@ -25,9 +25,21 @@ class ProfileController extends Controller
                 'required', 'string', 'lowercase', 'email', 'max:255',
                 Rule::unique('users')->ignore($user->id),
             ],
+            'profile_photo' => ['nullable', 'image', 'max:2048'], // Max 2MB
         ]);
 
         $user->fill($request->only('name', 'email'));
+
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            // Delete old photo if exists
+            if ($user->profile_photo && \Storage::disk('public')->exists($user->profile_photo)) {
+                \Storage::disk('public')->delete($user->profile_photo);
+            }
+
+            $path = $request->file('profile_photo')->store('profile-photos', 'public');
+            $user->profile_photo = $path;
+        }
 
         // Kalau email berubah, reset verifikasi email (opsional)
         if ($user->isDirty('email')) {

@@ -22,14 +22,9 @@ class AdminPublisherUpgradeRequested extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $approveUrl = URL::temporarySignedRoute(
-            'admin.upgrade_requests.approve',
-            now()->addHours(24),
-            ['upgradeRequest' => $this->req->id]
-        );
-
-        $rejectUrl = URL::temporarySignedRoute(
-            'admin.upgrade_requests.reject',
+        // Link ke halaman konfirmasi (bukan langsung approve)
+        $confirmUrl = URL::temporarySignedRoute(
+            'admin.upgrade_requests.show',
             now()->addHours(24),
             ['upgradeRequest' => $this->req->id]
         );
@@ -43,9 +38,8 @@ class AdminPublisherUpgradeRequested extends Notification
             ->line("Nama: {$u->name}")
             ->line("Email: {$u->email}")
             ->line("Request ID: {$this->req->id}")
-            ->action('Approve Upgrade', $approveUrl)
-            ->line('Jika ingin menolak, klik link ini:')
-            ->line($rejectUrl)
+            ->action('Tinjau Permintaan', $confirmUrl)
+            ->line('Klik tombol di atas untuk meninjau dan menyetujui/menolak permintaan.')
             ->line('Link berlaku 24 jam.');
     }
 }

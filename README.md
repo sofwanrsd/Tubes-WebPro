@@ -1,14 +1,19 @@
 # Dimz Store — Tubes WebPro (Laravel)
 
 Aplikasi e-commerce digital (E-Book Store) berbasis Laravel dengan:
-- Landing page + Catalog
-- Cart & Checkout
+- Landing page + Catalog dengan search & filter
+- Cart & Checkout dengan QRIS Payment
 - Pembayaran QRIS (statis → dinamis via API)
-- Verifikasi pembayaran via API Mutasi (hanya 3 mutasi terbaru) menggunakan **kode unik**
+- Verifikasi pembayaran otomatis via API Mutasi (menggunakan **kode unik**)
 - Dashboard berbasis role: **User / Publisher / Admin**
 - RBAC menggunakan **Spatie Laravel Permission**
 - Auth + UI kit menggunakan **Laravel Breeze**
 - Akses download e-book otomatis setelah pembayaran sukses
+- Profile dengan foto profil
+- Publisher Studio untuk kelola buku & pantau penjualan
+- Admin Panel untuk kelola user, buku, dan pesanan
+- Sistem upgrade Publisher dengan approval admin
+- UI Theme: **Hero Dark Wine & Gold**
 
 ---
 
@@ -118,9 +123,24 @@ Response berisi array **3 mutasi terbaru**.
 
 ---
 
-## 5) Tech Stack
+## 5) UI Theme
+
+Aplikasi menggunakan tema konsisten **Hero Dark Wine & Gold**:
+- Primary Color: `#5C0F14` (Dark Wine)
+- Accent Color: `#E6B65C` (Gold)
+- Background Gradient: Slate → Cream
+
+Tema diterapkan ke:
+- Halaman Auth (Login, Register, Forgot Password, dll)
+- Dashboard (User, Publisher, Admin)
+- Profile Page
+- Semua panel administrasi
+
+---
+
+## 6) Tech Stack
 - PHP 8.x
-- Laravel + Vite
+- Laravel 10 + Vite
 - Laravel Breeze (Auth UI kit)
 - TailwindCSS
 - MySQL/MariaDB

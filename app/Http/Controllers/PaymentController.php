@@ -62,4 +62,21 @@ class PaymentController extends Controller
 
         return response()->json($result);
     }
+
+    public function cancel(int $orderId)
+    {
+        $order = Order::findOrFail($orderId);
+
+        if ($order->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($order->status !== 'pending') {
+            return back()->with('error', 'Order tidak dapat dibatalkan.');
+        }
+
+        $order->update(['status' => 'cancelled']);
+
+        return redirect()->route('dashboard')->with('success', 'Order berhasil dibatalkan.');
+    }
 }

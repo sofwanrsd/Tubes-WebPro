@@ -11,7 +11,27 @@ class AdminBookController extends Controller
 {
     public function index()
     {
-        $books = Book::latest()->with('publisher')->paginate(20);
+        $query = Book::latest()->with('publisher');
+
+        // 1. Search (Title or Publisher Name)
+        if ($search = request('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhereHas('publisher', fn($p) => $p->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        // 2. Filter Status
+        if ($status = request('status')) {
+            if ($status !== 'all') {
+                $query->where('status', $status);
+            }
+        }
+
+        // 3. Pagination
+        $perPage = request('per_page', 20);
+        $books = $query->paginate($perPage)->withQueryString();
+
         return view('admin.books.index', compact('books'));
     }
 

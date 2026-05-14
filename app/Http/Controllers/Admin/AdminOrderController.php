@@ -12,7 +12,27 @@ class AdminOrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::latest()->with('user', 'payment')->paginate(20);
+        $query = Order::latest()->with('user', 'payment');
+
+        // 1. Search (ID or Username)
+        if ($search = request('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        // 2. Filter Status
+        if ($status = request('status')) {
+            if ($status !== 'all') {
+                $query->where('status', $status);
+            }
+        }
+
+        // 3. Per Page
+        $perPage = request('per_page', 20);
+        $orders = $query->paginate($perPage)->withQueryString();
+
         return view('admin.orders.index', compact('orders'));
     }
 

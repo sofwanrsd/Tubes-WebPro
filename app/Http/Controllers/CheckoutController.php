@@ -18,8 +18,34 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Keranjang masih kosong.');
         }
 
-        $items = array_values($cart);
-        $subtotal = array_sum(array_map(fn($x) => (int)$x['price'], $items));
+        // Ambil ID buku dari session
+        $itemIds = [];
+        foreach ($cart as $key => $val) {
+            $itemIds[] = is_array($val) ? ($val['id'] ?? ($val['book_id'] ?? $key)) : $key;
+        }
+
+        // Fetch fresh data
+        $books = \App\Models\Book::with('publisher')->whereIn('id', $itemIds)->get()->keyBy('id');
+        
+        $items = [];
+        $subtotal = 0;
+
+        foreach ($cart as $key => $val) {
+            $id = is_array($val) ? ($val['id'] ?? ($val['book_id'] ?? $key)) : $key;
+            if (!isset($books[$id])) continue;
+
+            $book = $books[$id];
+            $items[] = [
+                'id' => $book->id,
+                'book_id' => $book->id,
+                'title' => $book->title,
+                'price' => (int) $book->price,
+                'cover_path' => $book->cover_path,
+                'genre' => $book->genre,
+                'author_name' => $book->publisher->name ?? 'Admin',
+            ];
+            $subtotal += (int) $book->price;
+        }
 
         return view('checkout.index', compact('items', 'subtotal'));
     }

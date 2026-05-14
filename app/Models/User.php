@@ -18,7 +18,21 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
+        'profile_photo',
     ];
+
+    /**
+     * Get full URL for profile photo or default avatar.
+     */
+    public function getProfilePhotoUrlAttribute(): string
+    {
+        if ($this->profile_photo) {
+            return asset('storage/' . $this->profile_photo);
+        }
+
+        // Default avatar with user initial
+        return '';
+    }
 
     protected $hidden = [
         'password',
@@ -29,4 +43,15 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * Check if user has purchased a specific book.
+     */
+    public function hasPurchased(int $bookId): bool
+    {
+        return $this->hasMany(Order::class)
+            ->where('status', 'paid')
+            ->whereHas('items', fn($q) => $q->where('book_id', $bookId))
+            ->exists();
+    }
 }
